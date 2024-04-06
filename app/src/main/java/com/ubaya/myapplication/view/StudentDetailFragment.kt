@@ -8,12 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
+import com.squareup.picasso.Callback
+import com.squareup.picasso.Picasso
 import com.ubaya.myapplication.R
 import com.ubaya.myapplication.databinding.FragmentStudentDetailBinding
-import com.ubaya.myapplication.databinding.FragmentStudentListBinding
 import com.ubaya.myapplication.viewmodel.DetailViewModel
-import com.ubaya.myapplication.viewmodel.ListViewModel
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.schedulers.Schedulers
@@ -34,7 +33,13 @@ class StudentDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(this).get(DetailViewModel::class.java)
-        viewModel.fetch()
+        if(arguments != null) {
+            val studentID =
+                StudentDetailFragmentArgs.fromBundle(requireArguments()).idStudent
+            viewModel.fetch(studentID)
+            observeViewModel()
+        }
+
         observeViewModel()
 
     }
@@ -57,8 +62,23 @@ class StudentDetailFragment : Fragment() {
                     }
             }
 
+            val picasso = Picasso.Builder(this.requireContext())
+            picasso.listener { picasso, uri, exception ->
+                exception.printStackTrace()
+            }
+            picasso.build().load(it.photoUrl).into(binding.imageView2, object:
+                Callback {
+                override fun onSuccess() {
+                    binding.imageView2.visibility = View.VISIBLE
+                }
 
-                binding.txtID.setText(it.id)
+                override fun onError(e: Exception?) {
+                    Log.e("picasso_error", e.toString())
+                }
+
+            })
+
+            binding.txtID.setText(it.id)
             binding.txtName.setText(it.name)
             binding.txtDoB.setText(it.dob)
             binding.txtPhone.setText(it.phone)
